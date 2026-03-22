@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { DocumentGrid } from "@/components/documents/document-grid";
@@ -53,6 +53,14 @@ import { toast } from "sonner";
 import { api, apiBlob } from "@/lib/api";
 
 export default function DocumentsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" /></div>}>
+      <DocumentsPageInner />
+    </Suspense>
+  );
+}
+
+function DocumentsPageInner() {
   const searchParams = useSearchParams();
   const favoritesOnly = searchParams.get("favorites") === "true";
 
