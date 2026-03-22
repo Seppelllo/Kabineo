@@ -1,0 +1,98 @@
+services:
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  redis:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  minio:
+    restart: always
+    ports: !override []
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  api:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    restart: always
+    volumes:
+      - document_data:/data/documents
+    ports: !override []
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+
+  celery-worker:
+    command: celery -A app.workers.celery_app worker --loglevel=warning --concurrency=4
+    restart: always
+    volumes:
+      - document_data:/data/documents
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+
+  telegram-bot:
+    restart: always
+    volumes:
+      - document_data:/data/documents
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    command: ["node", "server.js"]
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    volumes: !override []
+    ports: !override []
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+      - frontend
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+
+volumes:
+  postgres_data:
+  minio_data:
+  document_data:
