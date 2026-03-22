@@ -242,7 +242,7 @@ function CommandSearchOverlay({ onClose }: { onClose: () => void }) {
   const [results, setResults] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50);
